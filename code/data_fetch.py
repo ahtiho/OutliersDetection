@@ -8,6 +8,8 @@ from dotenv import load_dotenv
 import os
 from datetime import date
 from synthetic_data import generate_synthetic_transactions
+import json
+from sklearn.preprocessing import LabelEncoder
 
 def load_environment_variables():
     load_dotenv()
@@ -64,7 +66,11 @@ def combine_data():
         
         df = pd.concat([df, df_2], ignore_index=True)
         
-        df.to_csv('transactions.csv')
+        print(df.head())
+        df.to_csv('files/transactions.csv')
+        
+    
+        
         return df
         
     except Exception as e:

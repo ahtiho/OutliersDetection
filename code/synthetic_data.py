@@ -10,7 +10,7 @@ def generate_synthetic_transactions(n):
     transactions = []
     for _ in range(n):
         transaction = {
-            'account_id': fake.uuid4(),  # Unique account ID
+            'account_id': random.choice(['SAVINGS', 'DAILY_USE', 'INVESTMENTS']),  # Unique account ID
             'amount': round(random.uniform(-500, 1000), 2),  # Random amount between 1 and 1000
             'authorized_date': (datetime.now() - timedelta(days=random.randint(0, 365))).date(),  # Random authorized date within the last year
             'category_id': str(random.randint(10000000, 13005000)),  # Random category ID

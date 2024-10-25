@@ -1,2 +1,4 @@
 .env
 quickstart/
+vae_model.pth
+__pycache__/
