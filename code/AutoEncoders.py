@@ -3,6 +3,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
+
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 class VAE(nn.Module):
@@ -35,8 +36,7 @@ class VAE(nn.Module):
         return dist.rsample()
 
     def decode(self, z):
-        decoded = self.decoder(z)
-        return decoded
+        return self.decoder(z)
 
     def forward(self, x):
         dist = self.encode(x)
@@ -73,7 +73,6 @@ def train(model, data_loader, epochs=1, learning_rate=1e-4):
         print(f"Epoch [{epoch + 1}/{epochs}], Loss: {epoch_loss / len(data_loader):.4f}")
 
 def evaluate(model, data_loader, original_df):
-    print(original_df.head())
     model.eval()
     reconstruction_errors = []
     all_originals = []
@@ -93,16 +92,17 @@ def evaluate(model, data_loader, original_df):
     outliers = reconstruction_errors > threshold
     original_df['outlier'] = outliers
     
-    print(original_df.head())
+    plot_anomalies(original_df)
+    return all_originals, all_reconstructed, reconstruction_errors
+
+def plot_anomalies(original_df):
     outlier_df = original_df[original_df['outlier']]
-    print(outlier_df['date'])
     plt.figure(figsize=(10, 6))
     plt.scatter(outlier_df['date'], outlier_df['amount'], c='red', alpha=0.5)
     plt.title('Anomaly Detection Visualization')
     plt.xlabel('Date')
     plt.ylabel('Amount')
     plt.show()
-    return all_originals, all_reconstructed, reconstruction_errors
 
 def plot_reconstruction(original, reconstructed, reconstruction_errors, num_samples=10):
     plt.figure(figsize=(10, 6))
