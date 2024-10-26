@@ -6,11 +6,11 @@ from torch.utils.data import TensorDataset, DataLoader
 from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import train_test_split
 from data_fetch import TransactionProcessor, PlaidClient
-from AutoEncoders import VAE, train, evaluate, plot_reconstruction, plot_anomalies
+from AutoEncoders import VAE, train, evaluate, plot_reconstruction, plot_anomalies, plot_latent_space
 
-MODEL_PATH = 'vae_model.pth'
+MODEL_PATH = 'vae_model_2.pth'
 DATA_PATH = 'files/transactions.csv'
-EXCLUDED_COLUMNS = ['Unnamed: 0', 'transaction_id', 'authorized_date', 'date']
+EXCLUDED_COLUMNS = ['transaction_id', 'authorized_date', 'date']
 
 def load_data(file_path):
     try:
@@ -66,7 +66,7 @@ def load_or_train_model(train_loader):
 
 def main():
     df = load_data(DATA_PATH)
-    train_df, test_df = train_test_split(df, test_size=0.2, random_state=42)
+    train_df, test_df = train_test_split(df, test_size=0.2, random_state=np.random.randint(0, 10000))
 
     train_tensor = preprocess_data(train_df)
     test_tensor = preprocess_data(test_df)
@@ -75,9 +75,16 @@ def main():
     test_loader = DataLoader(TensorDataset(test_tensor), batch_size=32, shuffle=False)
     
     model = load_or_train_model(train_loader)
-    original, reconstructed, errors = evaluate(model, test_loader, test_df)
+    original, reconstructed, errors, outlier_df = evaluate(model, test_loader, test_df)
+    test_df['reconstruction_error'] = errors
     plot_anomalies(test_df)
     plot_reconstruction(errors)
+    
+    outlier_df = outlier_df.drop(columns = ['outlier', 'reconstruction_error'] )
+    outlier_tensor = preprocess_data(outlier_df)
+    print(outlier_df.head())
+    print(test_df.head())
+    plot_latent_space(model, outlier_tensor)
     
 
 if __name__ == "__main__":

@@ -2,8 +2,10 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
+from sklearn.metrics import roc_curve, auc
 import matplotlib.pyplot as plt
-
+from sklearn.decomposition import PCA
+from sklearn.manifold import TSNE
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 class VAE(nn.Module):
@@ -88,11 +90,11 @@ def evaluate(model, data_loader, original_df):
     all_originals = torch.cat(all_originals, dim=0)
     all_reconstructed = torch.cat(all_reconstructed, dim=0)
     reconstruction_errors = np.array(reconstruction_errors)
-    threshold = np.percentile(reconstruction_errors, 95)
+    threshold = np.mean(reconstruction_errors) + 3 * np.std(reconstruction_errors)
     outliers = reconstruction_errors > threshold
     original_df['outlier'] = outliers
 
-    return all_originals, all_reconstructed, reconstruction_errors
+    return all_originals, all_reconstructed, reconstruction_errors, original_df
 
 def plot_anomalies(original_df):
     outlier_df = original_df[original_df['outlier']]
@@ -109,4 +111,29 @@ def plot_reconstruction(reconstruction_errors):
     plt.title('Distribution of Reconstruction Errors')
     plt.xlabel('Reconstruction Error')
     plt.ylabel('Frequency')
+    plt.show()
+    
+def plot_latent_space(self, original_df):
+    latent_representations = self.encoder(original_df).detach().cpu().numpy()
+
+    # Example with PCA
+    pca = PCA(n_components=2)
+    reduced_latent_pca = pca.fit_transform(latent_representations)
+
+    plt.figure(figsize=(10, 6))
+    plt.scatter(reduced_latent_pca[:, 0], reduced_latent_pca[:, 1], alpha=0.5)
+    plt.title('PCA of Latent Space')
+    plt.xlabel('PC1')
+    plt.ylabel('PC2')
+    plt.show()
+
+    # Example with t-SNE
+    tsne = TSNE(n_components=2, perplexity=30, n_iter=300)
+    reduced_latent_tsne = tsne.fit_transform(latent_representations)
+
+    plt.figure(figsize=(10, 6))
+    plt.scatter(reduced_latent_tsne[:, 0], reduced_latent_tsne[:, 1], alpha=0.5)
+    plt.title('t-SNE of Latent Space')
+    plt.xlabel('Dimension 1')
+    plt.ylabel('Dimension 2')
     plt.show()
