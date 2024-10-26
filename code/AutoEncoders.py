@@ -91,20 +91,19 @@ def evaluate(model, data_loader, original_df):
     threshold = np.percentile(reconstruction_errors, 95)
     outliers = reconstruction_errors > threshold
     original_df['outlier'] = outliers
-    
-    plot_anomalies(original_df)
+
     return all_originals, all_reconstructed, reconstruction_errors
 
 def plot_anomalies(original_df):
     outlier_df = original_df[original_df['outlier']]
-    plt.figure(figsize=(10, 6))
+    plt.figure(figsize=(14, 6))
     plt.scatter(outlier_df['date'], outlier_df['amount'], c='red', alpha=0.5)
     plt.title('Anomaly Detection Visualization')
     plt.xlabel('Date')
     plt.ylabel('Amount')
     plt.show()
 
-def plot_reconstruction(original, reconstructed, reconstruction_errors, num_samples=10):
+def plot_reconstruction(reconstruction_errors):
     plt.figure(figsize=(10, 6))
     plt.hist(reconstruction_errors, bins=50, alpha=0.7)
     plt.title('Distribution of Reconstruction Errors')

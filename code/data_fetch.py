@@ -66,9 +66,10 @@ class TransactionProcessor:
         end_date = date(2024, 12, 31)
         
         try:
+            generator = SyntheticTransactionGenerator()
             transactions = client.get_transactions(start_date, end_date)
             df = TransactionProcessor.flatten_transactions(transactions)
-            df_2 = SyntheticTransactionGenerator.generate_synthetic_transactions(1000)
+            df_2 = generator.generate_synthetic_transactions(1000)
             
             df = pd.concat([df, df_2], ignore_index=True)
             

@@ -4,8 +4,9 @@ import pandas as pd
 import torch
 from torch.utils.data import TensorDataset, DataLoader
 from sklearn.preprocessing import LabelEncoder
+from sklearn.model_selection import train_test_split
 from data_fetch import TransactionProcessor, PlaidClient
-from AutoEncoders import VAE, train, evaluate, plot_reconstruction
+from AutoEncoders import VAE, train, evaluate, plot_reconstruction, plot_anomalies
 
 MODEL_PATH = 'vae_model.pth'
 DATA_PATH = 'files/transactions.csv'
@@ -50,25 +51,34 @@ def preprocess_data(df):
     if torch.isnan(data_tensor).any() or torch.isinf(data_tensor).any():
         raise ValueError("Input data contains NaN or Inf values!")
     
-    return TensorDataset(data_tensor)
+    return data_tensor
 
-def load_or_train_model(data_loader):
+def load_or_train_model(train_loader):
     model = VAE(input_dim=12, hidden_dim=36, latent_dim=2)
     if os.path.exists(MODEL_PATH):
         model.load_state_dict(torch.load(MODEL_PATH))
         print("Model loaded from disk.")
     else:
-        train(model, data_loader, epochs=100)
+        train(model, train_loader, epochs=100)
         torch.save(model.state_dict(), MODEL_PATH)
         print("Model trained and saved to disk.")
     return model
 
 def main():
     df = load_data(DATA_PATH)
-    data_loader = DataLoader(preprocess_data(df), batch_size=32, shuffle=True)
-    model = load_or_train_model(data_loader)
-    original, reconstructed, errors = evaluate(model, data_loader, df)
-    plot_reconstruction(original, reconstructed, errors)
+    train_df, test_df = train_test_split(df, test_size=0.2, random_state=42)
+
+    train_tensor = preprocess_data(train_df)
+    test_tensor = preprocess_data(test_df)
+        
+    train_loader = DataLoader(TensorDataset(train_tensor), batch_size=32, shuffle=True)
+    test_loader = DataLoader(TensorDataset(test_tensor), batch_size=32, shuffle=False)
+    
+    model = load_or_train_model(train_loader)
+    original, reconstructed, errors = evaluate(model, test_loader, test_df)
+    plot_anomalies(test_df)
+    plot_reconstruction(errors)
+    
 
 if __name__ == "__main__":
     main()
